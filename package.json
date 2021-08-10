@@ -28,6 +28,7 @@
   "dependencies": {
     "@walletconnect/client": "^1.5.0",
     "@walletconnect/qrcode-modal": "^1.5.0",
+    "@walletconnect/web3-provider": "^1.5.3",
     "axios": "^0.21.1",
     "bignumber.js": "^9.0.1",
     "blockies-ts": "^1.0.0",

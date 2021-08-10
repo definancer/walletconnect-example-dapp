@@ -164,7 +164,7 @@ let connector: WalletConnect;
 // console.log("connector", connector.connected);
 
 
-class App extends React.Component<any, any> {
+class Web3App extends React.Component<any, any> {
   public state: IAppState = {
     ...INITIAL_STATE,
   };
@@ -611,4 +611,4 @@ class App extends React.Component<any, any> {
   };
 }
 
-export default App;
+export default Web3App;
