@@ -1,16 +1,15 @@
 import * as React from "react";
-import styled from "styled-components";
+
+// @ts-ignore
 import WalletConnect from "@walletconnect/client";
 import QRCodeModal from "@walletconnect/qrcode-modal";
+import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal";
 import { convertUtf8ToHex } from "@walletconnect/utils";
-import { IInternalEvent, IWalletConnectSession } from "@walletconnect/types";
-import Button from "./components/Button";
+import { IInternalEvent,IWalletConnectSession } from "@walletconnect/types";
 import Column from "./components/Column";
-import Wrapper from "./components/Wrapper";
 import Modal from "./components/Modal";
 import Header from "./components/Header";
 import Loader from "./components/Loader";
-import { fonts } from "./styles";
 import { apiGetAccountAssets, apiGetGasPrices, apiGetAccountNonce } from "./helpers/api";
 import {
   sanitizeHex,
@@ -19,211 +18,120 @@ import {
   hashPersonalMessage,
 } from "./helpers/utilities";
 import { convertAmountToRawNumber, convertStringToHex } from "./helpers/bignumber";
-import { IAssetData } from "./helpers/types";
 import Banner from "./components/Banner";
 import AccountAssets from "./components/AccountAssets";
 import { eip712 } from "./helpers/eip712";
+import {
+  IAppState,
+  INITIAL_STATE, SBalances,
+  SButtonContainer, SConnectButton,
+  SContent,
+  SKey, SLanding,
+  SLayout,
+  SModalContainer,
+  SModalParagraph,
+  SModalTitle,
+  SRow,
+  STable,
+  STestButton,
+  STestButtonContainer,
+  SValue,
+  SContainer,
+  bridge
+} from "./base";
 
-const SLayout = styled.div`
-  position: relative;
-  width: 100%;
-  /* height: 100%; */
-  min-height: 100vh;
-  text-align: center;
-`;
-
-const SContent = styled(Wrapper as any)`
-  width: 100%;
-  height: 100%;
-  padding: 0 16px;
-`;
-
-const SLanding = styled(Column as any)`
-  height: 600px;
-`;
-
-const SButtonContainer = styled(Column as any)`
-  width: 250px;
-  margin: 50px 0;
-`;
-
-const SConnectButton = styled(Button as any)`
-  border-radius: 8px;
-  font-size: ${fonts.size.medium};
-  height: 44px;
-  width: 100%;
-  margin: 12px 0;
-`;
-
-const SContainer = styled.div`
-  height: 100%;
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  word-break: break-word;
-`;
-
-const SModalContainer = styled.div`
-  width: 100%;
-  position: relative;
-  word-wrap: break-word;
-`;
-
-const SModalTitle = styled.div`
-  margin: 1em 0;
-  font-size: 20px;
-  font-weight: 700;
-`;
-
-const SModalParagraph = styled.p`
-  margin-top: 30px;
-`;
-
-// @ts-ignore
-const SBalances = styled(SLanding as any)`
-  height: 100%;
-  & h3 {
-    padding-top: 30px;
-  }
-`;
-
-const STable = styled(SContainer as any)`
-  flex-direction: column;
-  text-align: left;
-`;
-
-const SRow = styled.div`
-  width: 100%;
-  display: flex;
-  margin: 6px 0;
-`;
-
-const SKey = styled.div`
-  width: 30%;
-  font-weight: 700;
-`;
-
-const SValue = styled.div`
-  width: 70%;
-  font-family: monospace;
-`;
-
-const STestButtonContainer = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-`;
-
-const STestButton = styled(Button as any)`
-  border-radius: 8px;
-  font-size: ${fonts.size.medium};
-  height: 44px;
-  width: 100%;
-  max-width: 175px;
-  margin: 12px;
-`;
-
-interface IAppState {
-  connector: WalletConnect | null;
-  fetching: boolean;
-  connected: boolean;
-  chainId: number;
-  showModal: boolean;
-  pendingRequest: boolean;
-  uri: string;
-  accounts: string[];
-  address: string;
-  result: any | null;
-  assets: IAssetData[];
-}
-
-const INITIAL_STATE: IAppState = {
-  connector: null,
-  fetching: false,
-  connected: false,
-  chainId: 1,
-  showModal: false,
-  pendingRequest: false,
-  uri: "",
-  accounts: [],
-  address: "",
-  result: null,
-  assets: [],
-};
-
-// bridge url
-// const bridge = "https://bridge.walletconnect.org";
-const bridge = "http://10.0.3.22:5001";
-// localStorage.setItem('testObject', JSON.stringify(testObject));
 let connector: WalletConnect;
-
-// console.log("connector", connector.connected);
-
 
 class App extends React.Component<any, any> {
   public state: IAppState = {
     ...INITIAL_STATE,
   };
 
-  public async  componentWillMount() {
-    console.log("componentWillMount")
-    const walletConnectSession: string | null = localStorage.getItem("walletconnect");
-    if (typeof walletConnectSession === "string") {
-      console.log("old connector walletConnectSession");
-      const session: IWalletConnectSession = JSON.parse(walletConnectSession);
-      // console.log(session)
+  // public async  componentWillMount() {
+  //   console.log("componentWillMount")
+  //   const walletConnectSession: string | null = localStorage.getItem("walletconnect");
+  //   if (typeof walletConnectSession === "string") {
+  //
+  //   }
+  // }
+
+  public walletConnectInit = async () => {
+    const connector = new WalletConnect({
+      bridge: "https://bridge.walletconnect.org", // Required
+      qrcodeModal: WalletConnectQRCodeModal
+    });
+
+    connector.on("session_update", (error, payload) => {
+      if (error) {
+        throw error;
+      }
+
+    });
+
+    connector.on("disconnect", (error, payload) => {
+      if (error) {
+        throw error;
+      }
+
+      // Delete connector
+    });
+
+    const { accounts, chainId } = await connector.connect();
+    console.log(accounts,chainId)
+  }
+
+  // 链接按钮
+  public walletConnectInit_bak = async () => {
+
+    const walletSession: string | null = localStorage.getItem("walletconnect");
+    if (typeof walletSession === "string") {
+
+      const session: IWalletConnectSession = JSON.parse(walletSession);
+      console.log("old connector walletConnectSession",session);
+      // // console.log(session)
       connector =   new WalletConnect({ session });
       console.log(connector)
       if (connector.connected) {
         await this.setState({ connector });
-        await this.setState({
-          chainId: connector.chainId,
-          accounts: connector.accounts,
-          address: connector.accounts[0]
-        });
+        await this.setState({ chainId:connector.chainId, accounts:connector.accounts, address:connector.accounts[0] });
         await this.subscribeToEvents();
+
       }else {
         this.killSession();
       }
-    }
-  }
-
-  // 链接按钮
-  public walletConnectInit = async () => {
-
-    const walletSession: string | null = localStorage.getItem("walletconnect");
-    if(!walletSession){
+    }else {
       console.log("new connector");
       connector = new WalletConnect({ bridge, qrcodeModal: QRCodeModal });
-      await this.setState({ connector });
-      await this.setState({ chainId:connector.chainId, accounts:connector.accounts, address:connector.accounts[0] });
-      await this.subscribeToEvents();
+
+      await connector.createSession();
+
+      // await this.setState({ connector });
+      // await this.setState({ chainId:connector.chainId, accounts:connector.accounts, address:connector.accounts[0] });
+      // await this.subscribeToEvents();
     }
 
-    const callback = ()=>{
-      // console.log("connector.uri",connector.uri)
-      console.log("close model callback")
-    }
+    // const callback = ()=>{
+    //   // console.log("connector.uri",connector.uri)
+    //   console.log("close model callback")
+    // }
     // check if already connected
     if (!connector.connected) {
-      console.log("connector.uri 1 ",connector.connected)
-      if(connector.key){
-        console.log("connector.uri 3 ",connector.uri,"\n key",connector.key)
-        await connector.createSession();
-        QRCodeModal.open(connector.uri,callback)
-      }else {
-        console.log("connector.createSession pub redis ")
-        // create new session
-        await connector.createSession();
-      }
+      // console.log("connector.uri 1 ",connector.connected)
+      // if(connector.key){
+      //   console.log("connector.uri 3 ",connector.uri,"\n key",connector.key)
+      //
+      //   // QRCodeModal.open(connector.uri,callback)
+      // }else {
+      //   console.log("connector.createSession pub redis ")
+      //   // create new session
+      //   await connector.createSession();
+      //
+      //   console.log("connector.createSession() next ")
+      // }
     } else {
       console.log("connector.uri 2 ",connector.uri)
       if(walletSession){
-        QRCodeModal.open(connector.uri,callback)
+        // QRCodeModal.open(connector.uri,callback)
       }else {
         alert("new")
       }
@@ -237,11 +145,11 @@ class App extends React.Component<any, any> {
       return;
     }
 
-    connector.on("message", async (error, payload) => {
+    connector.on("message", async (error:any, payload:any) => {
       console.log(`connector.on("message")`);
     });
 
-    connector.on("session_update", async (error, payload) => {
+    connector.on("session_update", async (error:any, payload:any) => {
       console.log(`connector.on("session_update")`);
 
       if (error) {
@@ -252,7 +160,7 @@ class App extends React.Component<any, any> {
       this.onSessionUpdate(accounts, chainId);
     });
 
-    connector.on("connect", (error, payload) => {
+    connector.on("connect", (error:any, payload:any) => {
       console.log(`connector.on("connect")`);
 
       if (error) {
@@ -262,7 +170,7 @@ class App extends React.Component<any, any> {
       this.onConnect(payload);
     });
 
-    connector.on("disconnect", (error, payload) => {
+    connector.on("disconnect", (error:any, payload:any) => {
       console.log(`connector.on("disconnect")`);
 
       if (error) {
@@ -324,13 +232,13 @@ class App extends React.Component<any, any> {
     await this.getAccountAssets();
   };
 
+  // 获取账户余额
   public getAccountAssets = async () => {
     const { address, chainId } = this.state;
     this.setState({ fetching: true });
     try {
       // get account balances
       const assets = await apiGetAccountAssets(address, chainId);
-
       await this.setState({ fetching: false, address, assets });
     } catch (error) {
       console.error(error);
@@ -340,7 +248,7 @@ class App extends React.Component<any, any> {
 
   public toggleModal = () => this.setState({ showModal: !this.state.showModal });
 
-  // ---------  签名按钮 --------------
+  // ---------  签名交易按钮 --------------
   public testSendTransaction = async () => {
     const { connector, address, chainId } = this.state;
 
@@ -416,6 +324,7 @@ class App extends React.Component<any, any> {
     }
   };
 
+  // --------- signPersonalMessage 签名按钮 --------------
   public testSignPersonalMessage = async () => {
     const { connector, address, chainId } = this.state;
 
@@ -466,6 +375,7 @@ class App extends React.Component<any, any> {
     }
   };
 
+  // --------- signTypedData 签名按钮 --------------
   public testSignTypedData = async () => {
     const { connector, address, chainId } = this.state;
 
